@@ -24,20 +24,29 @@ export default function CameraScreen() {
   const language: AppLanguage =
     params.language === "hi" ? "hi" : "en";
 
-  const [permission, requestPermission] = useCameraPermissions();
-  const [photoUri, setPhotoUri] = useState<string | null>(null);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [permission, requestPermission] =
+    useCameraPermissions();
+
+  const [photoUri, setPhotoUri] =
+    useState<string | null>(null);
+
+  const [isAnalyzing, setIsAnalyzing] =
+    useState(false);
+
+  const [errorMessage, setErrorMessage] =
+    useState<string | null>(null);
 
   const cameraRef = useRef<CameraView>(null);
 
+  /* ---------------- VOICE GUIDANCE ---------------- */
+
   useEffect(() => {
+    Speech.stop();
+
     const message =
       language === "hi"
-        ? "कैमरा तैयार है। दवा की strip को कैमरे के सामने रखें और Capture Medicine बटन दबाएं।"
-        : "Camera is ready. Place the medicine strip in front of the camera and press Capture Medicine.";
-
-    Speech.stop();
+        ? "कैमरा तैयार है। दवा की strip को कैमरे के सामने रखें और नीचे दिए गए फोटो बटन पर डबल टैप करें।"
+        : "Camera is ready. Place the medicine strip in front of the camera and double tap the capture button.";
 
     Speech.speak(message, {
       language: language === "hi" ? "hi-IN" : "en-US",
@@ -49,17 +58,15 @@ export default function CameraScreen() {
     };
   }, [language]);
 
+  /* ---------------- PERMISSION CHECK ---------------- */
+
   if (!permission) {
     return (
-      <View style={styles.container}>
-        <Text
-          style={styles.message}
-          accessible={true}
-          accessibilityRole="text"
-        >
+      <View style={styles.centerScreen}>
+        <Text style={styles.loadingTitle}>
           {language === "hi"
-            ? "कैमरा permission check हो रही है।"
-            : "Checking camera permission."}
+            ? "कैमरा तैयार हो रहा है..."
+            : "Preparing camera..."}
         </Text>
       </View>
     );
@@ -67,19 +74,25 @@ export default function CameraScreen() {
 
   if (!permission.granted) {
     return (
-      <View style={styles.container}>
-        <Text
-          style={styles.message}
-          accessible={true}
-          accessibilityRole="text"
-        >
+      <View style={styles.centerScreen}>
+        <View style={styles.permissionIcon}>
+          <Text style={styles.permissionEmoji}>📷</Text>
+        </View>
+
+        <Text style={styles.permissionTitle}>
+          {language === "hi"
+            ? "Camera Permission चाहिए"
+            : "Camera Permission Required"}
+        </Text>
+
+        <Text style={styles.permissionText}>
           {language === "hi"
             ? "MedVoice को दवा scan करने के लिए camera access चाहिए।"
-            : "MedVoice AI needs camera access to scan medicine strips."}
+            : "MedVoice needs camera access to scan your medicine."}
         </Text>
 
         <Pressable
-          style={styles.actionButton}
+          style={styles.primaryButton}
           onPress={requestPermission}
           accessible={true}
           accessibilityRole="button"
@@ -90,13 +103,13 @@ export default function CameraScreen() {
           }
           accessibilityHint={
             language === "hi"
-              ? "कैमरा access allow करने के लिए double tap करें"
+              ? "Camera access allow करने के लिए double tap करें"
               : "Double tap to allow camera access"
           }
         >
-          <Text style={styles.actionButtonText}>
+          <Text style={styles.primaryButtonText}>
             {language === "hi"
-              ? "Camera Permission दें"
+              ? "Permission दें"
               : "Grant Permission"}
           </Text>
         </Pressable>
@@ -110,7 +123,9 @@ export default function CameraScreen() {
           accessible={true}
           accessibilityRole="button"
           accessibilityLabel={
-            language === "hi" ? "वापस जाएं" : "Go back"
+            language === "hi"
+              ? "वापस जाएं"
+              : "Go Back"
           }
           accessibilityHint={
             language === "hi"
@@ -119,12 +134,16 @@ export default function CameraScreen() {
           }
         >
           <Text style={styles.secondaryButtonText}>
-            {language === "hi" ? "वापस जाएं" : "Go Back"}
+            {language === "hi"
+              ? "← वापस जाएं"
+              : "← Go Back"}
           </Text>
         </Pressable>
       </View>
     );
   }
+
+  /* ---------------- CAPTURE ---------------- */
 
   const handleCapture = async () => {
     if (!cameraRef.current) return;
@@ -133,7 +152,6 @@ export default function CameraScreen() {
 
     try {
       Vibration.vibrate(100);
-
       Speech.stop();
 
       Speech.speak(
@@ -141,14 +159,16 @@ export default function CameraScreen() {
           ? "फोटो लिया जा रहा है।"
           : "Taking medicine photo.",
         {
-          language: language === "hi" ? "hi-IN" : "en-US",
+          language:
+            language === "hi" ? "hi-IN" : "en-US",
           rate: 0.9,
         }
       );
 
-      const photo = await cameraRef.current.takePictureAsync({
-        quality: 0.7,
-      });
+      const photo =
+        await cameraRef.current.takePictureAsync({
+          quality: 0.7,
+        });
 
       if (photo?.uri) {
         setPhotoUri(photo.uri);
@@ -158,7 +178,8 @@ export default function CameraScreen() {
             ? "फोटो लिया गया है। अब फोटो इस्तेमाल करने या दोबारा लेने का विकल्प चुनें।"
             : "Photo captured. You can use the photo or retake it.",
           {
-            language: language === "hi" ? "hi-IN" : "en-US",
+            language:
+              language === "hi" ? "hi-IN" : "en-US",
             rate: 0.9,
           }
         );
@@ -180,6 +201,8 @@ export default function CameraScreen() {
     }
   };
 
+  /* ---------------- RETAKE ---------------- */
+
   const handleRetake = () => {
     Speech.stop();
     Vibration.vibrate(70);
@@ -189,14 +212,17 @@ export default function CameraScreen() {
 
     Speech.speak(
       language === "hi"
-        ? "ठीक है। दोबारा फोटो लें।"
-        : "Okay. Please take the photo again.",
+        ? "ठीक है। दवा की साफ फोटो दोबारा लें।"
+        : "Okay. Please take a clear photo again.",
       {
-        language: language === "hi" ? "hi-IN" : "en-US",
+        language:
+          language === "hi" ? "hi-IN" : "en-US",
         rate: 0.9,
       }
     );
   };
+
+  /* ---------------- OCR / ANALYSIS ---------------- */
 
   const handleUsePhoto = async () => {
     if (!photoUri) return;
@@ -205,21 +231,22 @@ export default function CameraScreen() {
     setErrorMessage(null);
 
     Vibration.vibrate(100);
-
     Speech.stop();
 
     Speech.speak(
       language === "hi"
-        ? "दवा की फोटो पढ़ी जा रही है। कृपया प्रतीक्षा करें।"
-        : "Reading the medicine photo. Please wait.",
+        ? "दवा की जानकारी पढ़ी जा रही है। कृपया प्रतीक्षा करें।"
+        : "Reading the medicine information. Please wait.",
       {
-        language: language === "hi" ? "hi-IN" : "en-US",
+        language:
+          language === "hi" ? "hi-IN" : "en-US",
         rate: 0.9,
       }
     );
 
     try {
-      const result = await analyzeMedicinePhoto(photoUri);
+      const result =
+        await analyzeMedicinePhoto(photoUri);
 
       Vibration.vibrate(150);
 
@@ -229,7 +256,8 @@ export default function CameraScreen() {
           medicineName: result.medicineName,
           expiryDate: result.expiryDate,
           status: result.status,
-          confidence: result.confidence.toString(),
+          confidence:
+            result.confidence.toString(),
           language,
         },
       });
@@ -247,7 +275,8 @@ export default function CameraScreen() {
           ? "दवा की जानकारी पढ़ी नहीं जा सकी। कृपया साफ फोटो दोबारा लें।"
           : "The medicine information could not be read. Please take a clear photo again.",
         {
-          language: language === "hi" ? "hi-IN" : "en-US",
+          language:
+            language === "hi" ? "hi-IN" : "en-US",
           rate: 0.9,
         }
       );
@@ -256,27 +285,21 @@ export default function CameraScreen() {
     }
   };
 
+  /* ---------------- PHOTO PREVIEW ---------------- */
+
   if (photoUri) {
     return (
-      <View style={styles.container}>
-        <Text
-          style={styles.message}
-          accessible={true}
-          accessibilityRole="header"
-        >
-          {language === "hi" ? "फोटो तैयार है" : "Photo Captured"}
-        </Text>
-
-        {errorMessage && (
+      <View style={styles.previewScreen}>
+        <View style={styles.topBar}>
           <Text
-            style={styles.errorText}
-            accessible={true}
-            accessibilityRole="text"
-            accessibilityLiveRegion="polite"
+            style={styles.topTitle}
+            accessibilityRole="header"
           >
-            {errorMessage}
+            {language === "hi"
+              ? "फोटो की जांच करें"
+              : "Review Photo"}
           </Text>
-        )}
+        </View>
 
         <Image
           source={{ uri: photoUri }}
@@ -289,29 +312,39 @@ export default function CameraScreen() {
           }
         />
 
+        {errorMessage && (
+          <Text
+            style={styles.errorText}
+            accessible={true}
+            accessibilityRole="text"
+            accessibilityLiveRegion="polite"
+          >
+            {errorMessage}
+          </Text>
+        )}
+
         {isAnalyzing ? (
-          <View style={styles.analyzingContainer}>
-            <Text
-              style={styles.message}
-              accessible={true}
-              accessibilityRole="text"
-              accessibilityLiveRegion="polite"
-            >
-              {language === "hi"
-                ? "दवा की जानकारी पढ़ी जा रही है..."
-                : "Reading medicine information..."}
+          <View style={styles.analysisCard}>
+            <Text style={styles.analysisIcon}>
+              🤖
             </Text>
 
-            <Text style={styles.smallText}>
+            <Text style={styles.analysisTitle}>
               {language === "hi"
-                ? "कृपया प्रतीक्षा करें"
-                : "Please wait"}
+                ? "दवा पढ़ी जा रही है..."
+                : "Reading medicine..."}
+            </Text>
+
+            <Text style={styles.analysisText}>
+              {language === "hi"
+                ? "कृपया कुछ क्षण प्रतीक्षा करें"
+                : "Please wait a moment"}
             </Text>
           </View>
         ) : (
-          <>
+          <View style={styles.bottomActions}>
             <Pressable
-              style={styles.actionButton}
+              style={styles.primaryButton}
               onPress={handleUsePhoto}
               accessible={true}
               accessibilityRole="button"
@@ -322,11 +355,12 @@ export default function CameraScreen() {
               }
               accessibilityHint={
                 language === "hi"
-                  ? "फोटो को पढ़ने के लिए double tap करें"
-                  : "Double tap to analyze this photo"
+                  ? "दवा की जानकारी पढ़ने के लिए double tap करें"
+                  : "Double tap to read the medicine information"
               }
             >
-              <Text style={styles.actionButtonText}>
+              <Text style={styles.primaryButtonText}>
+                ✓{" "}
                 {language === "hi"
                   ? "फोटो इस्तेमाल करें"
                   : "Use Photo"}
@@ -350,211 +384,428 @@ export default function CameraScreen() {
               }
             >
               <Text style={styles.secondaryButtonText}>
+                ↻{" "}
                 {language === "hi"
                   ? "फोटो दोबारा लें"
                   : "Retake Photo"}
               </Text>
             </Pressable>
-          </>
+          </View>
         )}
       </View>
     );
   }
 
+  /* ---------------- CAMERA SCREEN ---------------- */
+
   return (
-    <View style={styles.container}>
-      <Text
-        style={styles.statusText}
-        accessible={true}
-        accessibilityRole="header"
-      >
-        {language === "hi"
-          ? "कैमरा तैयार है"
-          : "Camera Ready"}
-      </Text>
-
-      <Text
-        style={styles.instructionText}
-        accessible={true}
-        accessibilityRole="text"
-      >
-        {language === "hi"
-          ? "दवा की strip को कैमरे के सामने रखें।"
-          : "Place the medicine strip in front of the camera."}
-      </Text>
-
-      {errorMessage && (
-        <Text
-          style={styles.errorText}
-          accessible={true}
-          accessibilityRole="text"
-          accessibilityLiveRegion="polite"
-        >
-          {errorMessage}
-        </Text>
-      )}
-
+    <View style={styles.cameraScreen}>
       <CameraView
         ref={cameraRef}
-        style={styles.camera}
+        style={StyleSheet.absoluteFill}
         facing="back"
-        accessible={true}
-        accessibilityLabel={
-          language === "hi"
-            ? "दवा scan करने के लिए camera"
-            : "Camera for scanning medicine"
-        }
       />
 
-      <Pressable
-        style={styles.captureButton}
-        onPress={handleCapture}
+      <View
+        pointerEvents="none"
+        style={styles.overlay}
+      />
+
+      {/* Header */}
+      <View style={styles.cameraHeader}>
+        <View style={styles.headerBadge}>
+          <Text style={styles.headerIcon}>
+            💊
+          </Text>
+
+          <Text style={styles.headerTitle}>
+            {language === "hi"
+              ? "दवा स्कैन करें"
+              : "Scan Medicine"}
+          </Text>
+        </View>
+      </View>
+
+      {/* Scan Frame */}
+      <View
+        style={styles.scanFrame}
         accessible={true}
-        accessibilityRole="button"
         accessibilityLabel={
           language === "hi"
-            ? "दवा की फोटो लें"
-            : "Capture medicine photo"
-        }
-        accessibilityHint={
-          language === "hi"
-            ? "दवा की फोटो लेने के लिए double tap करें"
-            : "Double tap to take a photo of the medicine strip"
+            ? "दवा को scan frame के अंदर रखें"
+            : "Place medicine inside the scanning frame"
         }
       >
-        <Text style={styles.captureButtonText}>
+        <View
+          style={[styles.corner, styles.topLeft]}
+        />
+
+        <View
+          style={[styles.corner, styles.topRight]}
+        />
+
+        <View
+          style={[
+            styles.corner,
+            styles.bottomLeft,
+          ]}
+        />
+
+        <View
+          style={[
+            styles.corner,
+            styles.bottomRight,
+          ]}
+        />
+
+        <Text style={styles.frameText}>
           {language === "hi"
-            ? "📷 दवा की फोटो लें"
-            : "📷 Capture Medicine"}
+            ? "दवा की strip यहाँ रखें"
+            : "Place medicine here"}
         </Text>
-      </Pressable>
+      </View>
+
+      {/* Bottom Controls */}
+      <View style={styles.cameraBottom}>
+        <Text style={styles.cameraInstruction}>
+          {language === "hi"
+            ? "दवा का नाम और expiry साफ दिखाई देनी चाहिए"
+            : "Make sure the medicine name and expiry are clear"}
+        </Text>
+
+        <Pressable
+          style={({ pressed }) => [
+            styles.captureButton,
+            pressed && styles.capturePressed,
+          ]}
+          onPress={handleCapture}
+          accessible={true}
+          accessibilityRole="button"
+          accessibilityLabel={
+            language === "hi"
+              ? "दवा की फोटो लें"
+              : "Capture medicine photo"
+          }
+          accessibilityHint={
+            language === "hi"
+              ? "दवा की फोटो लेने के लिए double tap करें"
+              : "Double tap to take a photo"
+          }
+        >
+          <View style={styles.captureInner}>
+            <Text style={styles.captureIcon}>
+              📷
+            </Text>
+          </View>
+        </Pressable>
+
+        <Text style={styles.captureLabel}>
+          {language === "hi"
+            ? "फोटो लेने के लिए Double Tap"
+            : "Double tap to capture"}
+        </Text>
+      </View>
     </View>
   );
 }
 
+/* ==================== STYLES ==================== */
+
 const styles = StyleSheet.create({
-  container: {
+  cameraScreen: {
     flex: 1,
+    backgroundColor: "#000000",
+  },
+
+  overlay: {
+    ...StyleSheet.absoluteFill,
+    backgroundColor: "rgba(0,0,0,0.18)",
+  },
+
+  cameraHeader: {
+    position: "absolute",
+    top: 55,
+    left: 20,
+    right: 20,
+    alignItems: "center",
+  },
+
+  headerBadge: {
+    backgroundColor: "rgba(0,0,0,0.68)",
+    paddingHorizontal: 18,
+    paddingVertical: 11,
+    borderRadius: 24,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+
+  headerIcon: {
+    fontSize: 20,
+    marginRight: 8,
+  },
+
+  headerTitle: {
+    color: "#FFFFFF",
+    fontSize: 18,
+    fontWeight: "800",
+  },
+
+  scanFrame: {
+    position: "absolute",
+    top: "25%",
+    left: "10%",
+    width: "80%",
+    height: "35%",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  corner: {
+    position: "absolute",
+    width: 38,
+    height: 38,
+    borderColor: "#FFFFFF",
+  },
+
+  topLeft: {
+    top: 0,
+    left: 0,
+    borderTopWidth: 4,
+    borderLeftWidth: 4,
+  },
+
+  topRight: {
+    top: 0,
+    right: 0,
+    borderTopWidth: 4,
+    borderRightWidth: 4,
+  },
+
+  bottomLeft: {
+    bottom: 0,
+    left: 0,
+    borderBottomWidth: 4,
+    borderLeftWidth: 4,
+  },
+
+  bottomRight: {
+    bottom: 0,
+    right: 0,
+    borderBottomWidth: 4,
+    borderRightWidth: 4,
+  },
+
+  frameText: {
+    color: "#FFFFFF",
+    fontSize: 18,
+    fontWeight: "700",
+    backgroundColor: "rgba(0,0,0,0.58)",
+    paddingHorizontal: 15,
+    paddingVertical: 8,
+    borderRadius: 12,
+  },
+
+  cameraBottom: {
+    position: "absolute",
+    bottom: 35,
+    left: 20,
+    right: 20,
+    alignItems: "center",
+  },
+
+  cameraInstruction: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    textAlign: "center",
+    backgroundColor: "rgba(0,0,0,0.62)",
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 12,
+    marginBottom: 18,
+  },
+
+  captureButton: {
+    width: 92,
+    height: 92,
+    borderRadius: 46,
     backgroundColor: "#FFFFFF",
     alignItems: "center",
     justifyContent: "center",
-    padding: 20,
+    borderWidth: 4,
+    borderColor: "#0B5FFF",
   },
 
-  message: {
-    fontSize: 20,
-    fontWeight: "600",
-    color: "#000000",
-    textAlign: "center",
-    marginBottom: 24,
+  capturePressed: {
+    transform: [{ scale: 0.92 }],
   },
 
-  statusText: {
-    fontSize: 28,
-    fontWeight: "bold",
-    color: "#000000",
-    textAlign: "center",
-    marginBottom: 12,
-  },
-
-  instructionText: {
-    fontSize: 18,
-    color: "#333333",
-    textAlign: "center",
-    marginBottom: 16,
-  },
-
-  smallText: {
-    fontSize: 16,
-    color: "#555555",
-    textAlign: "center",
-    marginTop: 8,
-  },
-
-  analyzingContainer: {
-    width: "100%",
+  captureInner: {
+    width: 68,
+    height: 68,
+    borderRadius: 34,
+    backgroundColor: "#0B5FFF",
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 20,
   },
 
-  errorText: {
-    fontSize: 16,
-    color: "#B00020",
-    textAlign: "center",
-    marginBottom: 16,
-    fontWeight: "600",
+  captureIcon: {
+    fontSize: 30,
   },
 
-  camera: {
-    width: "100%",
-    height: "55%",
-    borderRadius: 12,
-    marginBottom: 20,
-    overflow: "hidden",
+  captureLabel: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "700",
+    marginTop: 9,
+  },
+
+  previewScreen: {
+    flex: 1,
+    backgroundColor: "#F5F9FF",
+    padding: 20,
+    justifyContent: "center",
+  },
+
+  topBar: {
+    alignItems: "center",
+    marginBottom: 18,
+  },
+
+  topTitle: {
+    fontSize: 27,
+    fontWeight: "800",
+    color: "#102A43",
   },
 
   preview: {
     width: "100%",
-    height: "48%",
-    borderRadius: 12,
-    marginBottom: 20,
+    height: "50%",
+    borderRadius: 20,
+    backgroundColor: "#D9E7F5",
+    marginBottom: 18,
   },
 
-  captureButton: {
-    backgroundColor: "#0B5FFF",
-    paddingVertical: 28,
-    paddingHorizontal: 32,
-    borderRadius: 16,
+  bottomActions: {
     width: "100%",
-    minHeight: 100,
+  },
+
+  primaryButton: {
+    width: "100%",
+    minHeight: 70,
+    borderRadius: 18,
+    backgroundColor: "#0B5FFF",
     alignItems: "center",
     justifyContent: "center",
+    paddingHorizontal: 20,
   },
 
-  captureButtonText: {
+  primaryButtonText: {
     color: "#FFFFFF",
-    fontSize: 24,
-    fontWeight: "bold",
-    textAlign: "center",
-  },
-
-  actionButton: {
-    backgroundColor: "#0B5FFF",
-    paddingVertical: 24,
-    paddingHorizontal: 32,
-    borderRadius: 16,
-    width: "100%",
-    minHeight: 80,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 16,
-  },
-
-  actionButtonText: {
-    color: "#FFFFFF",
-    fontSize: 22,
-    fontWeight: "bold",
+    fontSize: 20,
+    fontWeight: "800",
     textAlign: "center",
   },
 
   secondaryButton: {
-    backgroundColor: "#EEEEEE",
-    paddingVertical: 20,
-    paddingHorizontal: 32,
-    borderRadius: 16,
     width: "100%",
-    minHeight: 64,
+    minHeight: 62,
+    borderRadius: 18,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 2,
+    borderColor: "#D9E7F5",
     alignItems: "center",
     justifyContent: "center",
-    borderWidth: 2,
-    borderColor: "#000000",
+    marginTop: 12,
+    paddingHorizontal: 20,
   },
 
   secondaryButtonText: {
-    color: "#000000",
-    fontSize: 20,
-    fontWeight: "600",
+    color: "#243B53",
+    fontSize: 18,
+    fontWeight: "700",
     textAlign: "center",
+  },
+
+  analysisCard: {
+    width: "100%",
+    backgroundColor: "#FFFFFF",
+    borderRadius: 20,
+    padding: 24,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#D9E7F5",
+  },
+
+  analysisIcon: {
+    fontSize: 38,
+    marginBottom: 10,
+  },
+
+  analysisTitle: {
+    fontSize: 21,
+    fontWeight: "800",
+    color: "#102A43",
+  },
+
+  analysisText: {
+    fontSize: 15,
+    color: "#627D98",
+    marginTop: 6,
+  },
+
+  errorText: {
+    color: "#B00020",
+    backgroundColor: "#FFE8EC",
+    padding: 12,
+    borderRadius: 12,
+    textAlign: "center",
+    fontSize: 15,
+    fontWeight: "600",
+    marginBottom: 15,
+  },
+
+  centerScreen: {
+    flex: 1,
+    backgroundColor: "#F5F9FF",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 24,
+  },
+
+  loadingTitle: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#102A43",
+    textAlign: "center",
+  },
+
+  permissionIcon: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: "#E8F1FF",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 20,
+  },
+
+  permissionEmoji: {
+    fontSize: 40,
+  },
+
+  permissionTitle: {
+    fontSize: 26,
+    fontWeight: "800",
+    color: "#102A43",
+    textAlign: "center",
+    marginBottom: 10,
+  },
+
+  permissionText: {
+    fontSize: 16,
+    lineHeight: 23,
+    color: "#627D98",
+    textAlign: "center",
+    marginBottom: 25,
   },
 });

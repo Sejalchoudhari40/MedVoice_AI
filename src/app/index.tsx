@@ -16,14 +16,14 @@ export default function HomeScreen() {
   const [language, setLanguage] = useState<AppLanguage>("en");
 
   useEffect(() => {
-    const welcome =
-      language === "hi"
-        ? "MedVoice में आपका स्वागत है। दवा स्कैन करने के लिए स्कैन मेडिसिन बटन दबाएं।"
-        : "Welcome to MedVoice. Select your language, then press Scan Medicine to scan your medicine.";
-
     Speech.stop();
 
-    Speech.speak(welcome, {
+    const message =
+      language === "hi"
+        ? "नमस्ते। MedVoice में आपका स्वागत है। दवा स्कैन करने के लिए नीचे दिए गए बटन पर डबल टैप करें।"
+        : "Welcome to MedVoice. Choose your language, then double tap Scan Medicine to scan your medicine.";
+
+    Speech.speak(message, {
       language: language === "hi" ? "hi-IN" : "en-US",
       rate: 0.9,
     });
@@ -33,128 +33,176 @@ export default function HomeScreen() {
     };
   }, [language]);
 
-  const handleLanguageChange = (selectedLanguage: AppLanguage) => {
-    setLanguage(selectedLanguage);
+  const selectLanguage = (value: AppLanguage) => {
+    setLanguage(value);
     Vibration.vibrate(70);
   };
 
-  const handleScanPress = () => {
+  const startScan = () => {
     Speech.stop();
     Vibration.vibrate(100);
 
     router.push({
       pathname: "/camera",
-      params: {
-        language,
-      },
+      params: { language },
     });
   };
 
   return (
     <View style={styles.container}>
+      {/* Brand */}
+      <View style={styles.brandCircle}>
+        <Text style={styles.brandIcon}>M</Text>
+      </View>
+
       <Text
         style={styles.title}
         accessible={true}
         accessibilityRole="header"
       >
-        MedVoice AI
+        MedVoice
       </Text>
 
-      <Text
-        style={styles.subtitle}
-        accessible={true}
-        accessibilityRole="text"
-      >
+      <Text style={styles.tagline}>
+        AI Medicine Accessibility Assistant
+      </Text>
+
+      {/* Welcome Card */}
+      <View style={styles.welcomeCard}>
+        <Text style={styles.wave}>👋</Text>
+
+        <View style={styles.welcomeContent}>
+          <Text style={styles.welcomeTitle}>
+            {language === "hi"
+              ? "मैं आपकी मदद के लिए तैयार हूँ"
+              : "I'm ready to help"}
+          </Text>
+
+          <Text style={styles.welcomeText}>
+            {language === "hi"
+              ? "दवा की फोटो लेकर उसका नाम और expiry जानें।"
+              : "Take a photo of your medicine to read its name and expiry."}
+          </Text>
+        </View>
+      </View>
+
+      {/* Language */}
+      <Text style={styles.sectionTitle}>
         {language === "hi"
-          ? "दवा की expiry जांचने वाला सहायक"
-          : "Medicine expiry assistant"}
-      </Text>
-
-      <Text style={styles.languageTitle}>
-        {language === "hi" ? "भाषा चुनें" : "Choose Language"}
+          ? "भाषा चुनें"
+          : "Choose your language"}
       </Text>
 
       <View style={styles.languageRow}>
         <Pressable
           style={[
-            styles.languageButton,
-            language === "en" && styles.selectedLanguage,
+            styles.languageCard,
+            language === "en" && styles.languageCardSelected,
           ]}
-          onPress={() => handleLanguageChange("en")}
+          onPress={() => selectLanguage("en")}
           accessible={true}
           accessibilityRole="button"
           accessibilityLabel="English"
-          accessibilityState={{ selected: language === "en" }}
+          accessibilityState={{
+            selected: language === "en",
+          }}
         >
+          <Text style={styles.languageEmoji}>🇬🇧</Text>
+
           <Text
             style={[
-              styles.languageButtonText,
-              language === "en" && styles.selectedLanguageText,
+              styles.languageText,
+              language === "en" && styles.selectedText,
             ]}
           >
             English
           </Text>
+
+          {language === "en" && (
+            <Text style={styles.check}>✓</Text>
+          )}
         </Pressable>
 
         <Pressable
           style={[
-            styles.languageButton,
-            language === "hi" && styles.selectedLanguage,
+            styles.languageCard,
+            language === "hi" && styles.languageCardSelected,
           ]}
-          onPress={() => handleLanguageChange("hi")}
+          onPress={() => selectLanguage("hi")}
           accessible={true}
           accessibilityRole="button"
           accessibilityLabel="Hindi"
-          accessibilityState={{ selected: language === "hi" }}
+          accessibilityState={{
+            selected: language === "hi",
+          }}
         >
+          <Text style={styles.languageEmoji}>🇮🇳</Text>
+
           <Text
             style={[
-              styles.languageButtonText,
-              language === "hi" && styles.selectedLanguageText,
+              styles.languageText,
+              language === "hi" && styles.selectedText,
             ]}
           >
             हिन्दी
           </Text>
+
+          {language === "hi" && (
+            <Text style={styles.check}>✓</Text>
+          )}
         </Pressable>
       </View>
 
+      {/* Main Scan Button */}
       <Pressable
         style={({ pressed }) => [
           styles.scanButton,
           pressed && styles.scanButtonPressed,
         ]}
-        onPress={handleScanPress}
+        onPress={startScan}
         accessible={true}
         accessibilityRole="button"
         accessibilityLabel={
-          language === "hi" ? "दवा स्कैन करें" : "Scan Medicine"
+          language === "hi"
+            ? "दवा स्कैन करें"
+            : "Scan Medicine"
         }
         accessibilityHint={
           language === "hi"
-            ? "दवा की फोटो लेने के लिए डबल टैप करें"
-            : "Double tap to start scanning a medicine strip"
+            ? "दवा स्कैन करने के लिए डबल टैप करें"
+            : "Double tap to scan your medicine"
         }
       >
-        <Text style={styles.scanButtonText}>
-          {language === "hi" ? "📷 दवा स्कैन करें" : "📷 Scan Medicine"}
-        </Text>
+        <Text style={styles.scanIcon}>📷</Text>
+
+        <View style={styles.scanContent}>
+          <Text style={styles.scanTitle}>
+            {language === "hi"
+              ? "दवा स्कैन करें"
+              : "Scan Medicine"}
+          </Text>
+
+          <Text style={styles.scanHint}>
+            {language === "hi"
+              ? "Double tap to start"
+              : "Double tap to start"}
+          </Text>
+        </View>
       </Pressable>
 
-      <Text
-        style={styles.helpText}
-        accessible={true}
-        accessibilityRole="text"
-      >
-        {language === "hi"
-          ? "कैमरे को दवा की strip पर रखें और फोटो लें।"
-          : "Point your camera at the medicine strip to check its expiry date."}
-      </Text>
+      {/* Voice Status */}
+      <View style={styles.voiceBar}>
+        <Text style={styles.voiceIcon}>🔊</Text>
 
-      <Text style={styles.voiceText}>
-        🔊{" "}
-        {language === "hi"
-          ? "Voice guidance enabled"
-          : "Voice guidance enabled"}
+        <Text style={styles.voiceText}>
+          {language === "hi"
+            ? "Voice guidance चालू है"
+            : "Voice guidance is on"}
+        </Text>
+      </View>
+
+      <Text style={styles.footer}>
+        Designed for blind & low-vision users
       </Text>
     </View>
   );
@@ -163,101 +211,195 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#F5F9FF",
+    paddingHorizontal: 22,
+    paddingTop: 45,
+    alignItems: "center",
+  },
+
+  brandCircle: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: "#0B5FFF",
     alignItems: "center",
     justifyContent: "center",
-    padding: 24,
-  },
-
-  title: {
-    fontSize: 32,
-    fontWeight: "bold",
-    color: "#000000",
-    marginBottom: 8,
-    textAlign: "center",
-  },
-
-  subtitle: {
-    fontSize: 18,
-    color: "#333333",
-    marginBottom: 28,
-    textAlign: "center",
-  },
-
-  languageTitle: {
-    fontSize: 20,
-    fontWeight: "600",
-    color: "#000000",
     marginBottom: 12,
   },
 
-  languageRow: {
-    flexDirection: "row",
-    width: "100%",
-    gap: 12,
-    marginBottom: 28,
+  brandIcon: {
+    color: "#FFFFFF",
+    fontSize: 34,
+    fontWeight: "800",
   },
 
-  languageButton: {
-    flex: 1,
-    minHeight: 64,
-    borderRadius: 14,
-    borderWidth: 2,
-    borderColor: "#000000",
+  title: {
+    fontSize: 34,
+    fontWeight: "800",
+    color: "#102A43",
+  },
+
+  tagline: {
+    fontSize: 15,
+    color: "#627D98",
+    marginTop: 4,
+    marginBottom: 25,
+    textAlign: "center",
+  },
+
+  welcomeCard: {
+    width: "100%",
     backgroundColor: "#FFFFFF",
+    borderRadius: 20,
+    padding: 20,
+    flexDirection: "row",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#D9E7F5",
+    marginBottom: 25,
+  },
+
+  wave: {
+    fontSize: 34,
+    marginRight: 15,
+  },
+
+  welcomeContent: {
+    flex: 1,
+  },
+
+  welcomeTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#102A43",
+    marginBottom: 5,
+  },
+
+  welcomeText: {
+    fontSize: 14,
+    lineHeight: 20,
+    color: "#627D98",
+  },
+
+  sectionTitle: {
+    width: "100%",
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#243B53",
+    marginBottom: 10,
+  },
+
+  languageRow: {
+    width: "100%",
+    flexDirection: "row",
+    gap: 12,
+    marginBottom: 22,
+  },
+
+  languageCard: {
+    flex: 1,
+    minHeight: 70,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    borderWidth: 2,
+    borderColor: "#D9E7F5",
     alignItems: "center",
     justifyContent: "center",
+    position: "relative",
   },
 
-  selectedLanguage: {
-    backgroundColor: "#0B5FFF",
+  languageCardSelected: {
+    backgroundColor: "#E8F1FF",
     borderColor: "#0B5FFF",
   },
 
-  languageButtonText: {
-    fontSize: 20,
-    fontWeight: "600",
-    color: "#000000",
+  languageEmoji: {
+    fontSize: 23,
+    marginBottom: 3,
   },
 
-  selectedLanguageText: {
-    color: "#FFFFFF",
+  languageText: {
+    fontSize: 17,
+    fontWeight: "700",
+    color: "#243B53",
+  },
+
+  selectedText: {
+    color: "#0B5FFF",
+  },
+
+  check: {
+    position: "absolute",
+    right: 9,
+    top: 7,
+    color: "#0B5FFF",
+    fontSize: 16,
+    fontWeight: "800",
   },
 
   scanButton: {
-    backgroundColor: "#0B5FFF",
-    paddingVertical: 32,
-    paddingHorizontal: 40,
-    borderRadius: 16,
     width: "100%",
-    minHeight: 120,
+    minHeight: 105,
+    borderRadius: 22,
+    backgroundColor: "#0B5FFF",
+    flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
+    paddingHorizontal: 24,
+    elevation: 5,
   },
 
   scanButtonPressed: {
     backgroundColor: "#0847CC",
+    transform: [{ scale: 0.98 }],
   },
 
-  scanButtonText: {
+  scanIcon: {
+    fontSize: 40,
+    marginRight: 20,
+  },
+
+  scanContent: {
+    flex: 1,
+  },
+
+  scanTitle: {
     color: "#FFFFFF",
-    fontSize: 26,
-    fontWeight: "bold",
-    textAlign: "center",
+    fontSize: 25,
+    fontWeight: "800",
   },
 
-  helpText: {
-    fontSize: 15,
-    color: "#555555",
-    marginTop: 28,
-    textAlign: "center",
-    lineHeight: 22,
+  scanHint: {
+    color: "#DCE9FF",
+    fontSize: 14,
+    marginTop: 3,
+  },
+
+  voiceBar: {
+    marginTop: 18,
+    width: "100%",
+    backgroundColor: "#E8F1FF",
+    borderRadius: 14,
+    padding: 13,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  voiceIcon: {
+    fontSize: 20,
+    marginRight: 8,
   },
 
   voiceText: {
+    color: "#174A8B",
     fontSize: 14,
-    color: "#333333",
-    marginTop: 20,
-    textAlign: "center",
+    fontWeight: "600",
+  },
+
+  footer: {
+    position: "absolute",
+    bottom: 18,
+    fontSize: 12,
+    color: "#829AB1",
   },
 });

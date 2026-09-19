@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback, useRef } from "react";
+import React, { useCallback, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -22,22 +22,22 @@ function buildSpokenMessage(
 ): string {
   if (language === "hi") {
     if (status === "EXPIRED") {
-      return `चेतावनी। ${medicineName} की expiry date ${expiryDate} है। यह दवा expired लग रही है। कृपया pharmacist से verify करें।`;
+      return `चेतावनी। ${medicineName} की expiry ${expiryDate} है। यह दवा expired दिखाई दे रही है। कृपया pharmacist से verify करें।`;
     }
 
     if (status === "UNKNOWN") {
-      return "दवा की expiry date verify नहीं हो सकी। कृपया दवा की एक साफ फोटो दोबारा लें।";
+      return "Expiry date verify नहीं हो सकी। कृपया दवा की साफ फोटो दोबारा लें।";
     }
 
-    return `दवा का नाम ${medicineName} है। इसकी expiry ${expiryDate} है। यह दवा expired नहीं लग रही है।`;
+    return `Medicine का नाम ${medicineName} है। Expiry ${expiryDate} है। यह medicine expired नहीं दिखाई दे रही है।`;
   }
 
   if (status === "EXPIRED") {
-    return `Warning. ${medicineName} has an expiry date of ${expiryDate}. This medicine appears to be expired. Please verify with a pharmacist.`;
+    return `Warning. ${medicineName} expires on ${expiryDate}. This medicine appears to be expired. Please verify with a pharmacist.`;
   }
 
   if (status === "UNKNOWN") {
-    return "The medicine expiry date could not be verified. Please retake a clear photo.";
+    return "The expiry date could not be verified. Please retake a clear photo.";
   }
 
   return `Medicine name ${medicineName}. Expiry ${expiryDate}. This medicine appears to be not expired.`;
@@ -48,7 +48,7 @@ function formatStatusText(
   language: AppLanguage
 ): string {
   if (language === "hi") {
-    if (status === "EXPIRED") return "Expired / समाप्त";
+    if (status === "EXPIRED") return "Expired";
     if (status === "UNKNOWN") return "Verify नहीं हो सका";
     return "Expired नहीं है";
   }
@@ -63,16 +63,22 @@ export default function ResultScreen() {
   const headingRef = useRef<Text>(null);
 
   const params = useLocalSearchParams<{
-    medicineName: string;
-    expiryDate: string;
-    status: MedicineStatus;
-    confidence: string;
+    medicineName?: string;
+    expiryDate?: string;
+    status?: MedicineStatus;
+    confidence?: string;
     language?: string;
   }>();
 
-  const medicineName = params.medicineName || "Unknown";
-  const expiryDate = params.expiryDate || "Unknown";
-  const status = (params.status as MedicineStatus) || "UNKNOWN";
+  const medicineName =
+    params.medicineName || "Unknown";
+
+  const expiryDate =
+    params.expiryDate || "Unknown";
+
+  const status =
+    (params.status as MedicineStatus) || "UNKNOWN";
+
   const confidence = params.confidence
     ? parseFloat(params.confidence)
     : 0;
@@ -92,9 +98,9 @@ export default function ResultScreen() {
       Speech.stop();
 
       Speech.speak(message, {
-        language: language === "hi" ? "hi-IN" : "en-US",
+        language:
+          language === "hi" ? "hi-IN" : "en-US",
         rate: 0.9,
-        pitch: 1.0,
         onError: () => {
           console.log("Speech error occurred");
         },
@@ -102,24 +108,26 @@ export default function ResultScreen() {
     } catch (error) {
       console.log("Speech error:", error);
     }
-  }, [medicineName, expiryDate, status, language]);
+  }, [
+    medicineName,
+    expiryDate,
+    status,
+    language,
+  ]);
 
   useEffect(() => {
-    // Basic vibration feedback
-    if (status === "EXPIRED") {
-      Vibration.vibrate([0, 300, 150, 300]);
-    } else {
-      Vibration.vibrate(100);
-    }
-
+    Vibration.vibrate(150);
     speakResult();
 
     const timer = setTimeout(() => {
       if (headingRef.current) {
-        const node = findNodeHandle(headingRef.current);
+        const node =
+          findNodeHandle(headingRef.current);
 
         if (node) {
-          AccessibilityInfo.setAccessibilityFocus(node);
+          AccessibilityInfo.setAccessibilityFocus(
+            node
+          );
         }
       }
     }, 300);
@@ -128,122 +136,215 @@ export default function ResultScreen() {
       Speech.stop();
       clearTimeout(timer);
     };
-  }, [speakResult, status]);
+  }, [speakResult]);
 
   const handleScanAnother = () => {
     Speech.stop();
+    Vibration.vibrate(100);
+
     router.push({
       pathname: "/camera",
-      params: {
-        language,
-      },
+      params: { language },
     });
   };
 
+  const isExpired = status === "EXPIRED";
+  const isUnknown = status === "UNKNOWN";
+
   return (
     <View style={styles.container}>
-      <Text
-        ref={headingRef}
-        style={styles.heading}
-        accessible={true}
-        accessibilityRole="header"
-      >
-        {language === "hi" ? "स्कैन का परिणाम" : "Scan Result"}
-      </Text>
+      {/* Header */}
+      <View style={styles.header}>
+        <View
+          style={[
+            styles.successCircle,
+            isExpired && styles.expiredCircle,
+            isUnknown && styles.unknownCircle,
+          ]}
+        >
+          <Text style={styles.statusIcon}>
+            {isExpired
+              ? "!"
+              : isUnknown
+              ? "?"
+              : "✓"}
+          </Text>
+        </View>
 
-      <View style={styles.resultBlock}>
-        <Text style={styles.label}>
-          {language === "hi" ? "दवा:" : "Medicine:"}
+        <Text
+          ref={headingRef}
+          style={styles.heading}
+          accessible={true}
+          accessibilityRole="header"
+        >
+          {language === "hi"
+            ? "Scan Result"
+            : "Scan Result"}
+        </Text>
+
+        <Text style={styles.subtitle}>
+          {language === "hi"
+            ? "दवा की जानकारी पढ़ ली गई है"
+            : "Medicine information detected"}
+        </Text>
+      </View>
+
+      {/* Medicine Card */}
+      <View style={styles.infoCard}>
+        <Text style={styles.cardLabel}>
+          {language === "hi"
+            ? "MEDICINE NAME"
+            : "MEDICINE NAME"}
         </Text>
 
         <Text
-          style={styles.value}
+          style={styles.medicineName}
+          accessible={true}
           accessibilityRole="text"
         >
           {medicineName}
         </Text>
       </View>
 
-      <View style={styles.resultBlock}>
-        <Text style={styles.label}>
-          {language === "hi" ? "Expiry:" : "Expiry:"}
+      {/* Expiry Card */}
+      <View style={styles.infoCard}>
+        <Text style={styles.cardLabel}>
+          {language === "hi"
+            ? "EXPIRY DATE"
+            : "EXPIRY DATE"}
         </Text>
 
         <Text
-          style={styles.value}
+          style={styles.expiryDate}
+          accessible={true}
           accessibilityRole="text"
         >
           {expiryDate}
         </Text>
       </View>
 
-      <View style={styles.resultBlock}>
-        <Text style={styles.label}>
-          {language === "hi" ? "स्थिति:" : "Status:"}
+      {/* Status */}
+      <View
+        style={[
+          styles.statusCard,
+          isExpired && styles.statusExpired,
+          isUnknown && styles.statusUnknown,
+          !isExpired &&
+            !isUnknown &&
+            styles.statusSafe,
+        ]}
+        accessible={true}
+        accessibilityRole="text"
+        accessibilityLiveRegion="polite"
+      >
+        <Text style={styles.statusCardIcon}>
+          {isExpired
+            ? "⚠️"
+            : isUnknown
+            ? "?"
+            : "✓"}
         </Text>
 
-        <Text
-          style={styles.value}
-          accessibilityRole="text"
-        >
-          {formatStatusText(status, language)}
-        </Text>
+        <View style={styles.statusContent}>
+          <Text style={styles.statusLabel}>
+            {language === "hi"
+              ? "STATUS"
+              : "STATUS"}
+          </Text>
+
+          <Text
+            style={[
+              styles.statusValue,
+              isExpired &&
+                styles.statusValueExpired,
+              isUnknown &&
+                styles.statusValueUnknown,
+              !isExpired &&
+                !isUnknown &&
+                styles.statusValueSafe,
+            ]}
+          >
+            {formatStatusText(
+              status,
+              language
+            )}
+          </Text>
+        </View>
       </View>
 
-      <View style={styles.resultBlock}>
-        <Text style={styles.label}>
-          {language === "hi" ? "विश्वसनीयता:" : "Confidence:"}
+      {/* Confidence */}
+      <View style={styles.confidenceRow}>
+        <Text style={styles.confidenceLabel}>
+          {language === "hi"
+            ? "Reading confidence"
+            : "Reading confidence"}
         </Text>
 
-        <Text
-          style={styles.value}
-          accessibilityRole="text"
-        >
+        <Text style={styles.confidenceValue}>
           {Math.round(confidence * 100)}%
         </Text>
       </View>
 
+      {/* Listen */}
       <Pressable
-        style={styles.actionButton}
-        onPress={speakResult}
+        style={styles.listenButton}
+        onPress={() => {
+          Vibration.vibrate(70);
+          speakResult();
+        }}
         accessible={true}
         accessibilityRole="button"
         accessibilityLabel={
-          language === "hi" ? "परिणाम सुनें" : "Listen Again"
+          language === "hi"
+            ? "Result दोबारा सुनें"
+            : "Listen to result again"
         }
         accessibilityHint={
           language === "hi"
-            ? "परिणाम दोबारा सुनने के लिए डबल टैप करें"
+            ? "Result सुनने के लिए double tap करें"
             : "Double tap to hear the result again"
         }
       >
-        <Text style={styles.actionButtonText}>
-          {language === "hi" ? "🔊 दोबारा सुनें" : "🔊 Listen Again"}
+        <Text style={styles.listenIcon}>🔊</Text>
+
+        <Text style={styles.listenText}>
+          {language === "hi"
+            ? "Result सुनें"
+            : "Listen Again"}
         </Text>
       </Pressable>
 
+      {/* Scan Again */}
       <Pressable
-        style={styles.actionButton}
+        style={styles.scanAgainButton}
         onPress={handleScanAnother}
         accessible={true}
         accessibilityRole="button"
         accessibilityLabel={
           language === "hi"
             ? "दूसरी दवा स्कैन करें"
-            : "Scan Another Medicine"
+            : "Scan another medicine"
         }
         accessibilityHint={
           language === "hi"
-            ? "दूसरी दवा स्कैन करने के लिए डबल टैप करें"
-            : "Double tap to scan a different medicine"
+            ? "दूसरी दवा scan करने के लिए double tap करें"
+            : "Double tap to scan another medicine"
         }
       >
-        <Text style={styles.actionButtonText}>
+        <Text style={styles.scanAgainIcon}>
+          📷
+        </Text>
+
+        <Text style={styles.scanAgainText}>
           {language === "hi"
-            ? "📷 दूसरी दवा स्कैन करें"
-            : "📷 Scan Another Medicine"}
+            ? "दूसरी दवा स्कैन करें"
+            : "Scan Another Medicine"}
         </Text>
       </Pressable>
+
+      <Text style={styles.footer}>
+        MedVoice • Accessibility First
+      </Text>
     </View>
   );
 }
@@ -251,51 +352,214 @@ export default function ResultScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
-    padding: 24,
+    backgroundColor: "#F5F9FF",
+    paddingHorizontal: 20,
+    paddingTop: 38,
+  },
+
+  header: {
+    alignItems: "center",
+    marginBottom: 22,
+  },
+
+  successCircle: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: "#DDF7E8",
+    alignItems: "center",
     justifyContent: "center",
+    marginBottom: 10,
+  },
+
+  expiredCircle: {
+    backgroundColor: "#FFE3E3",
+  },
+
+  unknownCircle: {
+    backgroundColor: "#FFF1D6",
+  },
+
+  statusIcon: {
+    fontSize: 32,
+    fontWeight: "900",
+    color: "#16864A",
   },
 
   heading: {
-    fontSize: 28,
-    fontWeight: "bold",
-    color: "#000000",
-    marginBottom: 32,
+    fontSize: 30,
+    fontWeight: "800",
+    color: "#102A43",
     textAlign: "center",
   },
 
-  resultBlock: {
-    marginBottom: 20,
+  subtitle: {
+    fontSize: 14,
+    color: "#627D98",
+    marginTop: 5,
+    textAlign: "center",
   },
 
-  label: {
-    fontSize: 16,
-    color: "#555555",
-    marginBottom: 4,
-  },
-
-  value: {
-    fontSize: 24,
-    fontWeight: "600",
-    color: "#000000",
-  },
-
-  actionButton: {
-    backgroundColor: "#0B5FFF",
-    paddingVertical: 24,
-    paddingHorizontal: 32,
-    borderRadius: 16,
+  infoCard: {
     width: "100%",
-    minHeight: 72,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 18,
+    padding: 17,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: "#D9E7F5",
+  },
+
+  cardLabel: {
+    fontSize: 12,
+    fontWeight: "800",
+    letterSpacing: 1,
+    color: "#829AB1",
+    marginBottom: 6,
+  },
+
+  medicineName: {
+    fontSize: 25,
+    fontWeight: "800",
+    color: "#102A43",
+  },
+
+  expiryDate: {
+    fontSize: 25,
+    fontWeight: "800",
+    color: "#102A43",
+  },
+
+  statusCard: {
+    width: "100%",
+    minHeight: 78,
+    borderRadius: 18,
+    paddingHorizontal: 18,
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 12,
+    borderWidth: 1,
+  },
+
+  statusSafe: {
+    backgroundColor: "#E8F8EF",
+    borderColor: "#B7E5C9",
+  },
+
+  statusExpired: {
+    backgroundColor: "#FFE8E8",
+    borderColor: "#F2B8B8",
+  },
+
+  statusUnknown: {
+    backgroundColor: "#FFF4DE",
+    borderColor: "#F0D08A",
+  },
+
+  statusCardIcon: {
+    fontSize: 26,
+    marginRight: 14,
+  },
+
+  statusContent: {
+    flex: 1,
+  },
+
+  statusLabel: {
+    fontSize: 11,
+    fontWeight: "800",
+    letterSpacing: 1,
+    color: "#627D98",
+    marginBottom: 3,
+  },
+
+  statusValue: {
+    fontSize: 21,
+    fontWeight: "800",
+  },
+
+  statusValueSafe: {
+    color: "#16864A",
+  },
+
+  statusValueExpired: {
+    color: "#C62828",
+  },
+
+  statusValueUnknown: {
+    color: "#A56A00",
+  },
+
+  confidenceRow: {
+    width: "100%",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 4,
+    marginBottom: 10,
+  },
+
+  confidenceLabel: {
+    fontSize: 13,
+    color: "#627D98",
+  },
+
+  confidenceValue: {
+    fontSize: 14,
+    fontWeight: "800",
+    color: "#243B53",
+  },
+
+  listenButton: {
+    width: "100%",
+    minHeight: 62,
+    borderRadius: 17,
+    backgroundColor: "#0B5FFF",
+    flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    marginTop: 16,
+    marginTop: 4,
   },
 
-  actionButtonText: {
+  listenIcon: {
+    fontSize: 22,
+    marginRight: 9,
+  },
+
+  listenText: {
     color: "#FFFFFF",
-    fontSize: 20,
-    fontWeight: "bold",
+    fontSize: 18,
+    fontWeight: "800",
+  },
+
+  scanAgainButton: {
+    width: "100%",
+    minHeight: 62,
+    borderRadius: 17,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 2,
+    borderColor: "#0B5FFF",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 11,
+  },
+
+  scanAgainIcon: {
+    fontSize: 21,
+    marginRight: 9,
+  },
+
+  scanAgainText: {
+    color: "#0B5FFF",
+    fontSize: 17,
+    fontWeight: "800",
+  },
+
+  footer: {
     textAlign: "center",
+    fontSize: 11,
+    color: "#829AB1",
+    marginTop: 13,
   },
 });
