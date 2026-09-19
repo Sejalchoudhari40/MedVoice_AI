@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "MedVoice",
-    "slug": "MedVoice",
+    "slug": "medvoice-ai",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -17,7 +17,12 @@
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
+      ],
+      "package": "com.sejalchoudharisteam.medvoiceai"
     },
     "web": {
       "output": "static",
@@ -32,11 +37,24 @@
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 76
         }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "MedVoice AI needs camera access to scan medicine strips."
+        }
       ]
     ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "a8c04b74-ce4a-4880-9b1d-31bdb7a70f60"
+      }
+    },
+    "owner": "sejalchoudharis-team"
   }
 }
