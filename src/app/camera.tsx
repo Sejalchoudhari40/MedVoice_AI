@@ -15,6 +15,7 @@ export default function CameraScreen() {
   const [permission, requestPermission] = useCameraPermissions();
   const [photoUri, setPhotoUri] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const cameraRef = useRef<CameraView>(null);
 
   // Permission still loading
@@ -66,32 +67,47 @@ export default function CameraScreen() {
 
   const handleCapture = async () => {
     if (!cameraRef.current) return;
+    setErrorMessage(null);
     try {
       const photo = await cameraRef.current.takePictureAsync({
         quality: 0.7,
       });
       if (photo?.uri) {
         setPhotoUri(photo.uri);
+      } else {
+        setErrorMessage("Could not capture the photo. Please try again.");
       }
     } catch (error) {
       console.log("Capture error:", error);
+      setErrorMessage("Could not capture the photo. Please try again.");
     }
   };
 
   const handleRetake = () => {
     setPhotoUri(null);
+    setErrorMessage(null);
   };
 
   const handleUsePhoto = async () => {
     if (!photoUri) return;
     setIsAnalyzing(true);
+    setErrorMessage(null);
     try {
       const result = await analyzeMedicinePhoto(photoUri);
-      // Module 5 will navigate to a real result screen with this data.
-      // For now we log it so we can confirm the mock service works.
-      console.log("Mock AI result:", result);
+      router.push({
+        pathname: "/result" as any,
+        params: {
+          medicineName: result.medicineName,
+          expiryDate: result.expiryDate,
+          status: result.status,
+          confidence: result.confidence.toString(),
+        },
+      });
     } catch (error) {
       console.log("Mock AI error:", error);
+      setErrorMessage(
+        "Something went wrong analyzing the photo. Please try again."
+      );
     } finally {
       setIsAnalyzing(false);
     }
@@ -108,6 +124,17 @@ export default function CameraScreen() {
         >
           Photo captured.
         </Text>
+
+        {errorMessage && (
+          <Text
+            style={styles.errorText}
+            accessible={true}
+            accessibilityRole="text"
+            accessibilityLiveRegion="polite"
+          >
+            {errorMessage}
+          </Text>
+        )}
 
         <Image source={{ uri: photoUri }} style={styles.preview} />
 
@@ -160,6 +187,17 @@ export default function CameraScreen() {
         Camera ready.
       </Text>
 
+      {errorMessage && (
+        <Text
+          style={styles.errorText}
+          accessible={true}
+          accessibilityRole="text"
+          accessibilityLiveRegion="polite"
+        >
+          {errorMessage}
+        </Text>
+      )}
+
       <CameraView ref={cameraRef} style={styles.camera} facing="back" />
 
       <Pressable
@@ -194,6 +232,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#333333",
     marginBottom: 12,
+  },
+  errorText: {
+    fontSize: 16,
+    color: "#B00020",
+    textAlign: "center",
+    marginBottom: 16,
+    fontWeight: "600",
   },
   camera: {
     width: "100%",

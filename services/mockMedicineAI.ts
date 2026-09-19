@@ -16,6 +16,10 @@ export async function analyzeMedicinePhoto(
   // Simulate network/AI processing delay
   await new Promise((resolve) => setTimeout(resolve, 2000));
 
+  if (!photoUri) {
+    throw new Error("No photo provided for analysis");
+  }
+
   // Mock result — always returns the same demo data for the MVP
   const mockResult: MedicineAnalysisResult = {
     medicineName: "Crocin",
