@@ -64,4 +64,4 @@ To integrate a real vision/OCR API, replace the internals of this function with 
 
 ## Team / Hackathon
 
-Built in 24 hours for [hackathon name].
+Built in 24 hours for [Hack Devengers 2.0].
