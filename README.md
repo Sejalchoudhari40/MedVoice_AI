@@ -1,56 +1,67 @@
-# Welcome to your Expo app 👋
+# MedVoice AI
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+An accessible, voice-first Android app that helps blind and low-vision users check medicine expiry dates by scanning the medicine strip with their phone camera.
 
-## Get started
+## Problem
 
-1. Install dependencies
+Blind and low-vision individuals cannot visually read expiry dates printed on medicine strips, creating a real safety gap in medication management.
 
-   ```bash
-   npm install
-   ```
+## Solution
 
-2. Start the app
+MedVoice AI lets a user scan a medicine strip and hear the medicine name and expiry status spoken aloud — no reading required, fully TalkBack accessible.
 
-   ```bash
-   npx expo start
-   ```
+## Core Flow
 
-In the output, you'll find options to open the app in a
+1. Open app → large "Scan Medicine" button (TalkBack accessible)
+2. Camera opens → capture photo of medicine strip
+3. Photo is analyzed (currently via a mock AI service for this MVP)
+4. Result is spoken aloud automatically: medicine name, expiry, and status
+5. User can listen again or scan another medicine
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+## Tech Stack
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+- React Native + Expo
+- TypeScript
+- Expo Router
+- expo-camera
+- expo-speech
+- No backend, no database, no authentication (MVP scope)
 
-## Get a fresh project
+## Accessibility
 
-When you're ready, run:
+- Full Android TalkBack support on every screen
+- Large touch targets (64–120dp)
+- High-contrast text
+- No information conveyed by color alone
+- Automatic voice announcements — no reading required
+- See `TESTING.md` (or the accessibility checklist in project notes) for the full manual TalkBack test plan
 
-```bash
-npm run reset-project
-```
+## Running the App
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+\`\`\`bash
+npm install
+npx expo start
+\`\`\`
 
-### Other setup steps
+Scan the QR code with the Expo Go app on an Android device.
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+## Known Limitations
 
-## Learn more
+- Uses a **mock AI service** (`services/mockMedicineAI.ts`) — always returns a fixed demo result ("Crocin", not expired). No real computer vision or OCR is performed yet.
+- No persistence — nothing is saved between sessions.
+- English-only voice output.
+- Tested primarily on Android; iOS behavior with VoiceOver is untested.
 
-To learn more about developing your project with Expo, look at the following resources:
+## Future Real-AI Integration Point
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+The mock service lives in `services/mockMedicineAI.ts` and exposes a single function:
 
-## Join the community
+\`\`\`ts
+analyzeMedicinePhoto(photoUri: string): Promise<MedicineAnalysisResult>
+\`\`\`
 
-Join our community of developers creating universal apps.
+To integrate a real vision/OCR API, replace the internals of this function with an actual API call (e.g. a cloud OCR service or a custom-trained model), while keeping the same input/output shape. No other file needs to change.
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+## Team / Hackathon
+
+Built in 24 hours for [hackathon name].
