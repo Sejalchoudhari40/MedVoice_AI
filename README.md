@@ -1,67 +1,121 @@
-# MedVoice AI
+# 💊 MedVoice AI
 
-An accessible, voice-first Android app that helps blind and low-vision users check medicine expiry dates by scanning the medicine strip with their phone camera.
+### Accessibility-First Medicine Scanning & Expiry Assistant
 
-## Problem
+MedVoice AI is an accessibility-focused mobile application designed to help
+blind, low-vision, and elderly users read medicine packaging information more
+easily.
 
-Blind and low-vision individuals cannot visually read expiry dates printed on medicine strips, creating a real safety gap in medication management.
+The app uses the device camera and on-device ML Kit OCR to extract visible
+medicine text, identify the medicine name and expiry information, and present
+the result through both visual and voice feedback.
 
-## Solution
+---
 
-MedVoice AI lets a user scan a medicine strip and hear the medicine name and expiry status spoken aloud — no reading required, fully TalkBack accessible.
+## 🎯 Problem
 
-## Core Flow
+Medicine packaging often contains small and difficult-to-read text.
 
-1. Open app → large "Scan Medicine" button (TalkBack accessible)
-2. Camera opens → capture photo of medicine strip
-3. Photo is analyzed (currently via a mock AI service for this MVP)
-4. Result is spoken aloud automatically: medicine name, expiry, and status
-5. User can listen again or scan another medicine
+For blind and low-vision users, independently checking:
 
-## Tech Stack
+- Medicine name
+- Expiry date
+- Whether the medicine appears expired
 
-- React Native + Expo
-- TypeScript
-- Expo Router
-- expo-camera
-- expo-speech
-- No backend, no database, no authentication (MVP scope)
+can be difficult.
 
-## Accessibility
+MedVoice aims to make this basic information easier to access through a
+voice-first and accessibility-friendly experience.
 
-- Full Android TalkBack support on every screen
-- Large touch targets (64–120dp)
-- High-contrast text
-- No information conveyed by color alone
-- Automatic voice announcements — no reading required
-- See `TESTING.md` (or the accessibility checklist in project notes) for the full manual TalkBack test plan
+---
 
-## Running the App
+## ✨ Key Features
 
-\`\`\`bash
-npm install
-npx expo start
-\`\`\`
+### 🔊 Voice-First Experience
+- Voice welcome when the application opens
+- Spoken instructions during scanning
+- Automatic spoken scan results
+- Hindi and English voice support
 
-Scan the QR code with the Expo Go app on an Android device.
+### 🌐 Hindi & English
+Users can select:
 
-## Known Limitations
+- 🇬🇧 English
+- 🇮🇳 हिन्दी
 
-- Uses a **mock AI service** (`services/mockMedicineAI.ts`) — always returns a fixed demo result ("Crocin", not expired). No real computer vision or OCR is performed yet.
-- No persistence — nothing is saved between sessions.
-- English-only voice output.
-- Tested primarily on Android; iOS behavior with VoiceOver is untested.
+The selected language is used for voice guidance and results.
 
-## Future Real-AI Integration Point
+### 📷 Medicine Camera Scanner
+- Opens the device camera
+- Large accessibility-friendly capture control
+- Scan-frame guidance
+- Clear photo capture
+- Retake option
 
-The mock service lives in `services/mockMedicineAI.ts` and exposes a single function:
+### 🤖 ML Kit OCR
+MedVoice uses ML Kit text recognition to read visible text from the captured
+medicine package.
 
-\`\`\`ts
-analyzeMedicinePhoto(photoUri: string): Promise<MedicineAnalysisResult>
-\`\`\`
+The application processes the detected text to identify relevant medicine
+information.
 
-To integrate a real vision/OCR API, replace the internals of this function with an actual API call (e.g. a cloud OCR service or a custom-trained model), while keeping the same input/output shape. No other file needs to change.
+### 📅 Expiry Detection
+The application attempts to identify an expiry date from the visible package
+text and determines whether the medicine appears:
 
+- ✅ Not Expired
+- ⚠️ Expired
+- ❓ Could Not Be Verified
+
+### ♿ Accessibility
+Designed with accessibility as a core requirement:
+
+- TalkBack-friendly controls
+- Accessibility labels
+- Accessibility hints
+- Large touch targets
+- High-contrast interface
+- Voice instructions
+- Spoken results
+- Simple navigation
+
+### 📳 Feedback
+Vibration feedback is provided during important interactions such as:
+
+- Capture
+- Analysis
+- Result presentation
+
+---
+
+## 🧠 How It Works
+
+```text
+┌─────────────────────┐
+│    Open MedVoice    │
+└──────────┬──────────┘
+           ↓
+     🔊 Voice Welcome
+           ↓
+   🇬🇧 English / 🇮🇳 Hindi
+           ↓
+     📷 Scan Medicine
+           ↓
+     Camera Guidance
+           ↓
+      📸 Capture Photo
+           ↓
+       🤖 ML Kit OCR
+           ↓
+   ┌─────────────────┐
+   │ Medicine Name   │
+   │ Expiry Date     │
+   │ Status          │
+   └─────────────────┘
+           ↓
+     🔊 Voice Result
+           ↓
+       📳 Feedback
 ## Team / Hackathon
 
 Built in 24 hours for [Hack Devengers 2.0].
