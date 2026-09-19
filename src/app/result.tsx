@@ -1,5 +1,12 @@
-import React, { useEffect, useCallback } from "react";
-import { View, Text, Pressable, StyleSheet } from "react-native";
+import React, { useEffect, useCallback, useRef } from "react";
+import {
+  View,
+  Text,
+  Pressable,
+  StyleSheet,
+  findNodeHandle,
+  AccessibilityInfo,
+} from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import * as Speech from "expo-speech";
 import { MedicineStatus } from "../../services/mockMedicineAI";
@@ -26,6 +33,7 @@ function formatStatusText(status: MedicineStatus): string {
 
 export default function ResultScreen() {
   const router = useRouter();
+  const headingRef = useRef<Text>(null);
   const params = useLocalSearchParams<{
     medicineName: string;
     expiryDate: string;
@@ -40,14 +48,37 @@ export default function ResultScreen() {
 
   const speakResult = useCallback(() => {
     const message = buildSpokenMessage(medicineName, expiryDate, status);
-    Speech.stop();
-    Speech.speak(message, { language: "en" });
+    try {
+      Speech.stop();
+      Speech.speak(message, {
+        language: "en",
+        onError: () => {
+          console.log("Speech error occurred");
+        },
+      });
+    } catch (error) {
+      console.log("Speech error:", error);
+    }
   }, [medicineName, expiryDate, status]);
 
   useEffect(() => {
     speakResult();
+
+    // Move TalkBack focus to the heading when this screen appears,
+    // so the user starts navigating from the top instead of wherever
+    // focus was left on the previous screen.
+    const timer = setTimeout(() => {
+      if (headingRef.current) {
+        const node = findNodeHandle(headingRef.current);
+        if (node) {
+          AccessibilityInfo.setAccessibilityFocus(node);
+        }
+      }
+    }, 300);
+
     return () => {
       Speech.stop();
+      clearTimeout(timer);
     };
   }, [speakResult]);
 
@@ -59,6 +90,7 @@ export default function ResultScreen() {
   return (
     <View style={styles.container}>
       <Text
+        ref={headingRef}
         style={styles.heading}
         accessible={true}
         accessibilityRole="header"
